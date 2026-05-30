@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>b2b_lead_scorer — CREDIVA Dashboard</title>
+<style>
+@font-face {
+  font-family: 'Space Age';
+  src: url('../../dashboard/fonts/space-age.ttf') format('truetype'),
+       url('../../dashboard/fonts/space%20age.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+:root {
+  --indigo:       #4f46e5;
+  --indigo-light: #6366f1;
+  --indigo-dark:  #3730a3;
+  --cyan:         #06b6d4;
+  --green:        #34c759;
+  --orange:       #ff9500;
+  --red:          #ff3b30;
+  --card-bg:      #ffffff;
+  --sidebar-bg:   #1e1b4b;
+  --text-primary:   #1a1a2e;
+  --text-secondary: #6e6e8a;
+  --text-muted:     #9999b3;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 25%, #dbeafe 50%, #e0f2fe 75%, #d1fae5 100%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px;
+  background: var(--sidebar-bg);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logo-brand {
+  font-family: 'Space Age', 'DM Sans', sans-serif;
+  font-size: 21px;
+  letter-spacing: 0.05em;
+  background: linear-gradient(130deg, #c7d2fe 0%, #67e8f9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+
+.logo-tagline {
+  color: rgba(255,255,255,0.5);
+  font-size: 0.7rem;
+  margin-bottom: 24px;
+}
+
+.nav-item { color: #cbd5e1; padding: 10px 12px; border-radius: 6px; text-decoration: none; display: block; }
+.nav-item:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.nav-item.active { background: var(--indigo); color: #fff; }
+
+.main { flex: 1; padding: 32px; }
+h1 { font-size: 2rem; margin-bottom: 8px; color: var(--indigo-dark); }
+.sub { color: var(--text-secondary); margin-bottom: 24px; }
+
+.card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.card h2 { font-size: 1.2rem; margin-bottom: 16px; color: var(--indigo); }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: #f8fafc;
+  padding: 12px;
+  text-align: left;
+  color: var(--indigo);
+  font-weight: 600;
+  border-bottom: 2px solid var(--border);
+}
+
+.table td {
+  padding: 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tier-a { color: var(--green); font-weight: 700; }
+.tier-b { color: var(--cyan); }
+.tier-c { color: var(--orange); }
+.tier-d { color: var(--red); }
+
+.score-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.score-high { background: rgba(52,199,89,0.15); color: var(--green); }
+.score-mid { background: rgba(6,182,212,0.15); color: var(--cyan); }
+.score-low { background: rgba(153,153,179,0.15); color: var(--text-muted); }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+}
+.status.ok { background: rgba(52,199,89,0.15); color: var(--green); }
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary { background: var(--indigo); color: #fff; }
+.btn-primary:hover { background: var(--indigo-dark); }
+.btn-secondary { background: #f1f5f9; color: var(--text-primary); }
+.btn-secondary:hover { background: #e2e8f0; }
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+}
+.metric-value { font-size: 2rem; font-weight: 700; color: var(--indigo); }
+.metric-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; }
+
+.editable {
+  cursor: text;
+  border-bottom: 1px dashed transparent;
+}
+.editable:hover {
+  border-bottom: 1px dashed var(--indigo);
+}
+.editable:focus {
+  outline: 1px solid var(--indigo);
+  border-radius: 4px;
+}
+
+.loading { opacity: 0.6; pointer-events: none; }
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--indigo); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="logo-brand">CREDIVA</div>
+  <div class="logo-tagline">AI Factory · B2B Sales Intel</div>
+  <a href="javascript:void(0)" class="nav-item active" onclick="showSection('dashboard')">Dashboard</a>
+</nav>
+
+<main class="main">
+  <h1>B2B Lead Scorer</h1>
+  <p class="sub">Prioritize high-value prospects with CREDIVA intelligence</p>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="metric-value" id="leads-count">3</div>
+      <div class="metric-label">Leads in Table</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" id="high-value-count">-</div>
+      <div class="metric-label">High-Value (≥80)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-value" id="avg-score">-</div>
+      <div class="metric-label">Avg Score</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label" style="margin-top:0">
+        <span class="status ok" id="status-indicator">● Ready</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Lead Scoring
+      <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal; margin-left: 8px;">
+        (Edit Name/Company cells → Click Re-score Leads to update)
+      </span>
+    </h2>
+    <p style="margin-bottom: 16px; color: var(--text-secondary);">
+      <strong>Editable:</strong> Name and Company columns. <strong>Read-only:</strong> Score, Tier, and Action columns are computed after scoring.
+    </p>
+    <div style="margin-bottom: 16px;">
+      <button class="btn btn-primary" onclick="rescoreLeads()" id="rescore-btn">
+        <span id="btn-text">Score Leads</span>
+      </button>
+      <span id="loading-indicator" style="margin-left: 12px; display: none;"><span class="spinner"></span> Scoring...</span>
+    </div>
+
+    <!-- Inline Add Lead Form -->
+    <div class="card" style="margin-top: 16px;">
+      <h3 style="font-size: 1rem; margin-bottom: 12px; color: var(--indigo);">Add New Lead</h3>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <input type="text" id="new-name" placeholder="Name" style="flex: 1; min-width: 120px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <input type="text" id="new-company" placeholder="Company" style="flex: 1; min-width: 120px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 6px;">
+        <button class="btn btn-secondary" onclick="addLead()" style="padding: 8px 16px;">Add Lead</button>
+      </div>
+    </div>
+    <table class="table">
+      <thead>
+        <tr><th>Rank</th><th>Name</th><th>Company</th><th>Score</th><th>Tier</th><th>Action</th></tr>
+      </thead>
+      <tbody id="leads-table">
+        <tr data-id="0"><td>1</td><td class="editable" contenteditable="true">Sarah Chen</td><td class="editable" contenteditable="true">Stripe</td><td><span class="score-badge">-</span></td><td class="tier-c">-</td><td>—</td></tr>
+        <tr data-id="1"><td>2</td><td class="editable" contenteditable="true">Marcus Webb</td><td class="editable" contenteditable="true">Vercel</td><td><span class="score-badge">-</span></td><td class="tier-c">-</td><td>—</td></tr>
+        <tr data-id="2"><td>3</td><td class="editable" contenteditable="true">Alex Kim</td><td class="editable" contenteditable="true">Retool</td><td><span class="score-badge">-</span></td><td class="tier-c">-</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" id="result-section" style="display: none;">
+    <h2>Scoring Result</h2>
+    <pre id="result-output" style="background: #f8fafc; padding: 16px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem;"></pre>
+  </div>
+</main>
+</div>
+
+<script>
+// Sample leads data - editable in table
+let leadsData = [
+  { name: "Sarah Chen", company: "Stripe", role: "Head of RevOps", keywords: "enterprise, revops, intent" },
+  { name: "Marcus Webb", company: "Vercel", role: "CTO", keywords: "growth, tech" },
+  { name: "Alex Kim", company: "Retool", role: "Junior Dev", keywords: "" }
+];
+
+function getTableLeads() {
+  // Sync table cell values into leadsData BEFORE scoring
+  const rows = document.querySelectorAll('#leads-table tr');
+  leadsData = Array.from(rows).map((row, idx) => ({
+    name: row.cells[1].textContent.trim(),
+    company: row.cells[2].textContent.trim(),
+    role: leadsData[idx]?.role || '',
+    keywords: leadsData[idx]?.keywords || ''
+  }));
+  return leadsData;
+}
+
+async function rescoreLeads() {
+  const btn = document.getElementById('rescore-btn');
+  const btnText = document.getElementById('btn-text');
+  const loading = document.getElementById('loading-indicator');
+  const table = document.getElementById('leads-table');
+  const statusEl = document.getElementById('status-indicator');
+  const resultSection = document.getElementById('result-section');
+  const resultOutput = document.getElementById('result-output');
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btnText.textContent = 'Scoring...';
+  loading.style.display = 'inline';
+  statusEl.textContent = '● Processing...';
+  statusEl.className = 'status';
+
+  try {
+    const payload = getTableLeads();
+    const response = await fetch('/api/score', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+
+    if (data.status === 'ok' && data.results) {
+      renderResults(data.results);
+      updateMetrics(data.results);
+      statusEl.textContent = '● Complete';
+      statusEl.className = 'status ok';
+      resultSection.style.display = 'block';
+      resultOutput.textContent = JSON.stringify(data.results, null, 2);
+    } else {
+      throw new Error(data.message || 'Scoring failed');
+    }
+  } catch (err) {
+    // Explicit backend unreachable error
+    if (err.message.includes('Failed to fetch') || err.message.includes('fetch')) {
+      statusEl.textContent = '● Backend unreachable (port 8765)';
+      statusEl.className = 'status';
+      statusEl.style.background = 'rgba(255,59,48,0.15)';
+      statusEl.style.color = '#ff3b30';
+    } else {
+      statusEl.textContent = '● Error';
+      statusEl.className = 'status';
+      statusEl.style.background = 'rgba(255,59,48,0.15)';
+      statusEl.style.color = '#ff3b30';
+    }
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btnText.textContent = 'Re-score Leads';
+    loading.style.display = 'none';
+  }
+}
+
+function renderResults(results) {
+  const tbody = document.getElementById('leads-table');
+  // Preserve role/keywords from leadsData when updating table
+  tbody.innerHTML = results.map((r, i) => {
+    const existing = leadsData[i] || {};
+    // Update leadsData to ensure role/keywords persist
+    leadsData[i] = { ...existing, name: r.name, company: r.company };
+    const tier = r.crediva_score >= 80 ? 'A' : r.crediva_score >= 60 ? 'B' : r.crediva_score >= 40 ? 'C' : 'D';
+    const tierClass = r.crediva_score >= 80 ? 'tier-a' : r.crediva_score >= 60 ? 'tier-b' : r.crediva_score >= 40 ? 'tier-c' : 'tier-d';
+    const scoreClass = r.crediva_score >= 80 ? 'score-high' : r.crediva_score >= 60 ? 'score-mid' : r.crediva_score >= 40 ? 'score-low' : 'score-low';
+    const action = r.crediva_score >= 80 ? 'Contact today' : r.crediva_score >= 60 ? 'Nurture' : r.crediva_score >= 40 ? 'Monitor' : 'Skip';
+    return `<tr data-id="${i}">
+      <td>${i+1}</td>
+      <td class="editable" contenteditable="true">${r.name}</td>
+      <td class="editable" contenteditable="true">${r.company}</td>
+      <td><span class="score-badge ${scoreClass}">${r.crediva_score}</span></td>
+      <td class="${tierClass}">${tier} ${tier === 'A' ? '⚡' : tier === 'B' ? '✓' : tier === 'C' ? '→' : '✕'}</td>
+      <td>${action} <button class="btn btn-secondary" onclick="removeLead(${i})" style="padding: 2px 8px; font-size: 0.75rem; margin-left: 8px;">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function updateMetrics(results) {
+  const highValue = results.filter(r => r.crediva_score >= 80).length;
+  const validScores = results.filter(r => r.crediva_score > 0);
+  const avgScore = validScores.length > 0 ? Math.round(validScores.reduce((sum, r) => sum + r.crediva_score, 0) / validScores.length) : results.length;
+  document.getElementById('leads-count').textContent = results.length;
+  document.getElementById('high-value-count').textContent = highValue;
+  document.getElementById('avg-score').textContent = avgScore;
+}
+
+function addLead() {
+  const nameEl = document.getElementById('new-name');
+  const companyEl = document.getElementById('new-company');
+  const name = nameEl.value.trim();
+  const company = companyEl.value.trim();
+  
+  if (!name || !company) {
+    alert('Please enter both Name and Company');
+    return;
+  }
+  
+  const tbody = document.getElementById('leads-table');
+  const newRow = document.createElement('tr');
+  newRow.setAttribute('data-id', leadsData.length);
+  newRow.innerHTML = `<td>${leadsData.length + 1}</td>
+    <td class="editable" contenteditable="true">${name}</td>
+    <td class="editable" contenteditable="true">${company}</td>
+    <td><span class="score-badge">-</span></td>
+    <td class="tier-d">-</td>
+    <td>—</td>`;
+  tbody.appendChild(newRow);
+  
+  leadsData.push({ name, company, role: '', keywords: '' });
+  updateMetrics(leadsData.map(l => ({ crediva_score: 0 })));
+  
+  nameEl.value = '';
+  companyEl.value = '';
+}
+
+function removeLead(index) {
+  if (!confirm('Remove this lead?')) return;
+  leadsData.splice(index, 1);
+  document.querySelector(`tr[data-id="${index}"]`).remove();
+  // Re-index remaining rows
+  document.querySelectorAll('#leads-table tr').forEach((row, i) => {
+    row.setAttribute('data-id', i);
+    row.cells[0].textContent = i + 1;
+    const removeBtn = row.querySelector('button');
+    if (removeBtn) removeBtn.setAttribute('onclick', `removeLead(${i})`);
+  });
+  updateMetrics(leadsData.map(l => ({ crediva_score: 0 })));
+}
+
+function showSection(name) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  if (event && event.target) event.target.classList.add('active');
+}
+</script>
+</body>
+</html>

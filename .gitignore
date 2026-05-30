@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.bak
+.pytest_cache/
+.env
+*.log
+.crediva_secret.key
+*.key
+*.pem
+secrets/
+.crediva_secret.key
+*.key
+*.pem
+secrets/
