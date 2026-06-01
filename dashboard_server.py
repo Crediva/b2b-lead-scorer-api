@@ -72,6 +72,60 @@ class DashboardHandler(http.server.SimpleHTTPRequestHandler):
                 "results": results
             })
         
+        elif parsed.path == "/api/lead-capture":
+            # Capture email from landing page form
+            import urllib.request
+            import urllib.parse
+            from datetime import datetime, timezone
+            
+            email = data.get("email", "").strip().lower()
+            if not email or "@" not in email:
+                self.send_json({"status": "error", "message": "Invalid email"})
+                return
+            
+            # Save to local file
+            captures_path = BASE_DIR / "data" / "captured_leads.json"
+            captures_path.parent.mkdir(exist_ok=True)
+            
+            captures = []
+            if captures_path.exists():
+                try:
+                    captures = json.loads(captures_path.read_text())
+                except:
+                    captures = []
+            
+            captures.append({
+                "email": email,
+                "captured_at": datetime.now(timezone.utc).isoformat(),
+                "source": "landing_page"
+            })
+            captures_path.write_text(json.dumps(captures, indent=2))
+            
+            # Send notification via Resend
+            resend_key = os.environ.get("RESEND_API_KEY", "")
+            if resend_key:
+                try:
+                    req = urllib.request.Request(
+                        "https://api.resend.com/emails",
+                        method="POST",
+                        headers={
+                            "Authorization": f"Bearer {resend_key}",
+                            "Content-Type": "application/json"
+                        },
+                        data=json.dumps({
+                            "from": "CREDIVA <hello@crediva.dev>",
+                            "to": ["credivacompany@gmail.com"],
+                            "subject": f"🎯 New Lead Capture: {email}",
+                            "html": f"<h2>New lead captured from landing page</h2><p><strong>Email:</strong> {email}</p><p><strong>Source:</strong> b2b_lead_scorer landing</p><p><strong>Time:</strong> {datetime.now(timezone.utc).isoformat()}</p><p><strong>Total captures:</strong> {len(captures)}</p>"
+                        }).encode()
+                    )
+                    urllib.request.urlopen(req, timeout=10)
+                except Exception as e:
+                    print(f"Resend notification failed: {e}")
+            
+            self.send_json({"status": "ok", "message": "Thanks! We will be in touch soon."})
+            return
+        
         elif parsed.path == "/api/data/delete":
             # Delete lead by index (GDPR right-to-erasure)
             leads_path = BASE_DIR / "data" / "leads.json"
