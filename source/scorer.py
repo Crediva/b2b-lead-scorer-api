@@ -90,8 +90,9 @@ def score_lead(lead):
     intent_keywords = [
         "buying", "evaluating", "searching", "looking for", "in market",
         "replacing", "upgrading", "expanding", "scaling", "transforming",
-        "intent", "revops", "growth", "enterprise", "optimization",
-        "automation", "pipeline", "qualified", "decision", "budget",
+        "intent", "revops", "rev ops", "revenue operations", "growth",
+        "enterprise", "optimization", "automation", "pipeline", "qualified",
+        "decision", "budget", "b2b", "saas",
     ]
     intent_hits = sum(1 for kw in intent_keywords if kw in description)
     score += min(20, intent_hits * 4)
