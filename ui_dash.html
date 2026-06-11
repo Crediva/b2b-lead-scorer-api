@@ -435,31 +435,6 @@ async function submitLeadCapture(e) {
   }
   return false;
 }
-
-async function submitLeadCapture(e) {
-  e.preventDefault();
-  const email = document.getElementById('cta-email').value;
-  const msg = document.getElementById('cta-msg');
-  msg.textContent = 'Sending...';
-  msg.style.color = '#fff';
-  try {
-    const resp = await fetch('/api/lead-capture', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email: email})
-    });
-    const data = await resp.json();
-    if (data.status === 'ok') {
-      msg.textContent = '✓ ' + data.message;
-      document.getElementById('cta-email').value = '';
-    } else {
-      msg.textContent = '✗ ' + (data.message || 'Error');
-    }
-  } catch (err) {
-    msg.textContent = '✗ Network error. Please try again.';
-  }
-  return false;
-}
 </script>
 
 <section style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;padding:48px 32px;text-align:center;margin:48px 32px;border-radius:12px;box-shadow:0 10px 30px rgba(79,70,229,0.3)">
