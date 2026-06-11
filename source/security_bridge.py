@@ -4,6 +4,7 @@ Audit trail for GDPR compliance before B2B outreach.
 Wired into: factory_daemon Stage 11, api_email_sender.py
 Session: v14.22
 """
+import fcntl
 import json
 import os
 from pathlib import Path
@@ -15,14 +16,15 @@ MASTER_LOG = BASE / "logs" / "master_log.jsonl"
 
 
 def _write_entry(entry: dict) -> None:
-    """Append one audit entry atomically."""
+    """Append one audit entry atomically with file locking."""
     AUDIT_LOG.parent.mkdir(parents=True, exist_ok=True)
     line = json.dumps(entry, default=str) + "\n"
-    # Append-safe: read existing, write all + new
-    existing = AUDIT_LOG.read_text() if AUDIT_LOG.exists() else ""
-    tmp = AUDIT_LOG.with_suffix(".tmp")
-    tmp.write_text(existing + line)
-    os.rename(tmp, AUDIT_LOG)
+    with open(AUDIT_LOG, "a") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        f.write(line)
+        f.flush()
+        os.fsync(f.fileno())
+        fcntl.flock(f, fcntl.LOCK_UN)
 
 
 def audit_event(event_type: str, actor: str, resource: str,
