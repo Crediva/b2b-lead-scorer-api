@@ -137,6 +137,9 @@ def score_batch(leads):
         scored = dict(lead)
         scored["crediva_score"] = score_lead(lead)
         scored["scored_at"] = timestamp
+        # Log data access for GDPR audit trail
+        if lead.get("name") or lead.get("company"):
+            log_data_access(lead.get("name", lead.get("company", "unknown")), "b2b_lead_scorer")
         results.append(scored)
     return sorted(results, key=lambda x: x["crediva_score"], reverse=True)
 
