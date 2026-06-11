@@ -15,10 +15,15 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-# Import encryption utilities (relative path)
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
-from fernet_crypto import encrypt_field, decrypt_field
-from security_bridge import log_data_access
+# Import encryption/security utilities from the local source package.
+# Support both package imports (`from source import score_batch`) and direct
+# CLI execution (`python3 source/scorer.py ...`).
+try:
+    from .fernet_crypto import encrypt_field, decrypt_field
+    from .security_bridge import log_data_access
+except ImportError:  # pragma: no cover - exercised when run as a script
+    from fernet_crypto import encrypt_field, decrypt_field
+    from security_bridge import log_data_access
 
 
 def load_leads(filepath):
@@ -75,8 +80,8 @@ def score_lead(lead):
                           "revops", "salesops", "growthops", "sales", "marketing", "revenue", "product"]
     title_hits = sum(1 for kw in decision_keywords if kw in title)
     title_hits += sum(1 for kw in relevance_keywords if kw in title)
-    # Heavy boost for "head of X" pattern (typical decision-maker signal)
-    if "head of" in title or "chief" in title or "vp of" in title or "vp," in title:
+    # Heavy boost for senior decision-maker patterns
+    if "head of" in title or "chief" in title or "vp of" in title or "vp," in title or "vp " in title:
         title_hits += 3
     score += min(35, title_hits * 7)
 
